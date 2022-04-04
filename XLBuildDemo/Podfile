@@ -1,0 +1,35 @@
+# Uncomment the next line to define a global platform for your project
+# platform :ios, '9.0'
+
+source 'https://github.com/CocoaPods/Specs.git'
+
+# 预编译静态库插件，如果没有安装运行 `gem install cocoapods-hy` 安装一下
+# 1. 使用静态库编译：
+#      use_frameworks! :linkage => :static
+#      use_static_binary!
+#    使用动态库编译：
+#      use_frameworks!
+#      use_dynamic_binary!
+# 2. 如果某个库不想使用预编译加参数 :ppbuild => false
+# 3. 可以设置编译参数，默认不设置 例如：
+#    set_custom_xcodebuild_options_for_prebuilt_frameworks :simulator => "ARCHS=$(ARCHS_STANDARD)"
+
+plugin 'cocoapods-xlbuild'
+# 静态库预编译编译
+# use_frameworks! :linkage => :static
+# use_static_binary!
+
+
+# 动态库预编译
+ use_frameworks!
+ use_dynamic_binary!
+
+#remove_source_code_for_prebuilt_frameworks!
+
+target 'XLBuildDemo' do
+  # Comment the next line if you don't want to use dynamic frameworks
+
+    pod 'AFNetworking', '4.0.1',    :binary => true
+    pod 'Masonry',                  :binary => false
+    pod 'SDWebImage'
+end

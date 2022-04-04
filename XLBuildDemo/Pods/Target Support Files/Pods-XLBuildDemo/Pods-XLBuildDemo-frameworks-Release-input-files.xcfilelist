@@ -1,0 +1,4 @@
+${PODS_ROOT}/Target Support Files/Pods-XLBuildDemo/Pods-XLBuildDemo-frameworks.sh
+${PODS_ROOT}/AFNetworking/AFNetworking.framework
+${BUILT_PRODUCTS_DIR}/Masonry/Masonry.framework
+${PODS_ROOT}/SDWebImage/SDWebImage.framework
