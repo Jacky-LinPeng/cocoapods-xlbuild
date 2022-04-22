@@ -16,7 +16,6 @@ module Pod
 
 					proj_path_new = Pathname.new(sandbox.project_path)
 
-					puts "[HY].沙盒路径：#{sandbox_path}"
 	    		project = Xcodeproj::Project.open(proj_path)
     			exsited_framework_pod_names.each do |target_name|
 	    			real_reference("_Prebuild/#{target_name}", project, target_name)
@@ -24,7 +23,46 @@ module Pod
 	    		project.save;
 	    	end
 
-	    	private
+
+				# 动态库dsym问题[CP] Copy dSYM
+				def adjust_dynamic_framework_dsym
+					sandbox_path = Pathname.new(sandbox.root).to_s
+					pre_sandbox = Pod::PrebuildSandbox.from_standard_sandbox(sandbox)
+					exsited_framework_pod_names = pre_sandbox.exsited_framework_pod_names || []
+
+					exsited_framework_pod_names.each do |target_name|
+						input_xcfilelist = sandbox_path + "/Target1 Support Files/" + target_name + "/#{target_name}-copy-dsyms-input-files.xcfilelist"
+						output_xcfilelist = sandbox_path + "/Target Support Files/" + target_name + "/#{target_name}-copy-dsyms-output-files.xcfilelist"
+						remove_duplicated_bcsymbolmap_lines(input_xcfilelist)
+						remove_duplicated_bcsymbolmap_lines(output_xcfilelist)
+					end
+				end
+
+				#https://github.com/CocoaPods/CocoaPods/issues/10373
+				def remove_duplicated_bcsymbolmap_lines(path)
+					if File.exist?path
+						top_lines = []
+						bcsymbolmap_lines = []
+						for line in File.readlines(path).map { |line| line.strip }
+							if line.include? ".bcsymbolmap"
+								bcsymbolmap_lines.append(line)
+							else
+								#去重
+								if not top_lines.include?line
+									top_lines.append(line)
+								end
+							end
+						end
+
+						final_lines = top_lines + bcsymbolmap_lines.uniq
+						File.open(path, "w+") do |f|
+							f.puts(final_lines)
+						end
+					end
+				end
+
+
+				private
 	    	def get_project_name(tageter_name)
 	    		return "#{tageter_name}.xcodeproj"
 	    	end

@@ -170,7 +170,7 @@ Pod::HooksManager.register('cocoapods-xlbuild', :pre_install) do |installer_cont
 
     # -- step 2: pod install ---
     # install
-    Pod::UI.puts "🤖  Pod Install " + Time.new.inspect
+    Pod::UI.puts "🤖  Pod Install "
     # go on the normal install step ...
 
 end
@@ -178,16 +178,15 @@ end
 ## pod 安装依赖的时候会执行install，install的时候会执行run_plugins_post_install_hooks（Prebuildhook了该方法）
 # 只要有触发install方法就会触发如下的
 Pod::HooksManager.register('cocoapods-xlbuild', :post_install) do |installer_context|
-    Pod::UI.puts "🤖  Pod Install hook " + Time.new.inspect
     if Pod::Podfile::DSL.static_binary
         Pod::UI.puts "🤖  replace_tagert_copy_source_sh " + Time.new.inspect
         Pod::PrebuildSandbox.replace_tagert_copy_source_sh(installer_context)
     end
 
     if !Pod.is_prebuild_stage && Pod::Podfile::DSL.dont_remove_source_code
-        Pod::UI.puts "🤖  pod工程关联引用源码 " + Time.new.inspect
         require_relative 'reference/reference_source_code'
         installer_context.refrence_source_code
+        installer_context.adjust_dynamic_framework_dsym
     end
 end
 
