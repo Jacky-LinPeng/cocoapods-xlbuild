@@ -31,7 +31,7 @@ module Pod
 					exsited_framework_pod_names = pre_sandbox.exsited_framework_pod_names || []
 
 					exsited_framework_pod_names.each do |target_name|
-						input_xcfilelist = sandbox_path + "/Target1 Support Files/" + target_name + "/#{target_name}-copy-dsyms-input-files.xcfilelist"
+						input_xcfilelist = sandbox_path + "/Target Support Files/" + target_name + "/#{target_name}-copy-dsyms-input-files.xcfilelist"
 						output_xcfilelist = sandbox_path + "/Target Support Files/" + target_name + "/#{target_name}-copy-dsyms-output-files.xcfilelist"
 						remove_duplicated_bcsymbolmap_lines(input_xcfilelist)
 						remove_duplicated_bcsymbolmap_lines(output_xcfilelist)
