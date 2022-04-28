@@ -5,6 +5,9 @@ require_relative 'tool/tool'
 module Pod
     class Podfile
         module DSL
+            def set_local_frameworks_cache_path(path)
+                DSL.local_frameworks_cache_path = path
+            end
             # Enable prebuiding for all pods
             # it has a lower priority to other xlbuild settings
             def use_dynamic_binary!
@@ -83,6 +86,10 @@ module Pod
 
             class_attr_accessor :custom_build_options
             class_attr_accessor :custom_build_options_simulator
+
+            class_attr_accessor :local_frameworks_cache_path
+            local_frameworks_cache_path = nil
+
             self.custom_build_options = []
             self.custom_build_options_simulator = []
         end
@@ -138,6 +145,7 @@ Pod::HooksManager.register('cocoapods-xlbuild', :pre_install) do |installer_cont
 
     # make another custom sandbox
     standard_sandbox = installer_context.sandbox
+    #linpeng edit： 修改Pod目录为 Pod/_Prebuild
     prebuild_sandbox = Pod::PrebuildSandbox.from_standard_sandbox(standard_sandbox)
 
     # get the podfile for prebuild
@@ -176,10 +184,9 @@ Pod::HooksManager.register('cocoapods-xlbuild', :pre_install) do |installer_cont
 end
 
 ## pod 安装依赖的时候会执行install，install的时候会执行run_plugins_post_install_hooks（Prebuildhook了该方法）
-# 只要有触发install方法就会触发如下的
+# 只要有触发install方法就会触发如下的 ，pre hook的时候有重新创建一个Install( binary_installer.install!)因此会触发两次的post_install的hook
 Pod::HooksManager.register('cocoapods-xlbuild', :post_install) do |installer_context|
     if Pod::Podfile::DSL.static_binary
-        Pod::UI.puts "🤖  replace_tagert_copy_source_sh " + Time.new.inspect
         Pod::PrebuildSandbox.replace_tagert_copy_source_sh(installer_context)
     end
 

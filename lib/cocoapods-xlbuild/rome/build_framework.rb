@@ -23,8 +23,7 @@ def build_for_iosish_platform(sandbox,
   deployment_target = target.platform.deployment_target.to_s
   
   target_label = target.label # name with platform if it's used in multiple platforms
-  #linpeng edit
-  Pod::UI.puts "[HY].Prebuilding #{target_label} -> #{target.version}"
+  Pod::UI.puts "[XL].Prebuilding #{target_label} -> #{target.version}"
   
   other_options = []
   # bitcode enabled
@@ -95,11 +94,13 @@ def build_for_iosish_platform(sandbox,
       FileUtils.mv tmp_lipoed_binary_path, "#{device_framework_path}.dSYM/Contents/Resources/DWARF/#{module_name}", :force => true
     end
     # move
+    # linpeng edit:xxxx.framework.DSYM文件挪到GenerateFramework的xxx目录下
     FileUtils.mv device_dsym, output_path, :force => true
   end
 
   # output
   output_path.mkpath unless output_path.exist?
+  #linpeng edit: 将build文件夹的xxxx.framework移动到GenerateFramework的xxxx目录下
   FileUtils.mv device_framework_path, output_path, :force => true
   # 如果是静态库则需要手动处理资源文件
   if Pod::Podfile::DSL.static_binary

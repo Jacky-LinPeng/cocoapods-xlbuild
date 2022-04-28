@@ -115,14 +115,52 @@ module Pod
             Pod::Prebuild.remove_build_dir(sandbox_path)
             targets.each do |target|
                 #linpeng edit  + target.version
-                output_path = sandbox.framework_folder_path_for_target_name(target.name)
+                @sandbox_framework_folder_path_for_target_name = sandbox.framework_folder_path_for_target_name(target.name)
+                output_path = @sandbox_framework_folder_path_for_target_name
                 output_path.rmtree if output_path.exist?
                 if !target.should_build?
                     UI.puts "Prebuilding #{target.label}"
                     next
                 end
                 output_path.mkpath unless output_path.exist?
-                Pod::Prebuild.build(sandbox_path, target, output_path, bitcode_enabled,  Podfile::DSL.custom_build_options,  Podfile::DSL.custom_build_options_simulator)
+
+                #local cache
+                localCachePathRoot = Pod::Podfile::DSL.local_frameworks_cache_path
+                is_static_binary = Pod::Podfile::DSL.static_binary
+                type_frameworks_dir = is_static_binary ? "static" : "dynamic"
+                is_has_local_cache = localCachePathRoot != nil
+                if not is_has_local_cache
+                    #开始使用XcodeBuild进行编译静态库
+                    Pod::Prebuild.build(sandbox_path, target, output_path, bitcode_enabled,  Podfile::DSL.custom_build_options,  Podfile::DSL.custom_build_options_simulator)
+                else
+                    targetFrameworkPath = localCachePathRoot + "/#{type_frameworks_dir}/#{target.name}/#{target.version}"
+                    if Dir.exist?(targetFrameworkPath)
+                        puts "[XL].本地缓存仓库获取:#{target.name}（#{target.version}） #{type_frameworks_dir}"
+                        Dir.foreach(targetFrameworkPath) do |file|
+                            if file !="." and file !=".."
+                                f = targetFrameworkPath+"/"+file
+                                FileUtils.cp_r(f, output_path, :remove_destination => false )
+                            end
+                        end
+                    else
+                        #开始使用XcodeBuild进行编译静态库
+                        Pod::Prebuild.build(sandbox_path, target, output_path, bitcode_enabled,  Podfile::DSL.custom_build_options,  Podfile::DSL.custom_build_options_simulator)
+
+                        #save for cache
+                        puts "[XL].本地缓存仓库新增:#{target.name}（#{target.version} #{type_frameworks_dir}"
+                        local_cache_path = targetFrameworkPath
+                        FileUtils.makedirs(local_cache_path) unless File.exists?local_cache_path
+                        c_output_path = output_path.to_s
+                        if Dir.exist?(output_path)
+                            Dir.foreach(output_path) do |file|
+                                if file !="." and file !=".."
+                                    f = c_output_path+"/"+file
+                                    FileUtils.cp_r(f, local_cache_path, :remove_destination => false )
+                                end
+                            end
+                        end
+                    end
+                end
 
                 # save the resource paths for later installing，动态库需要将frameworkwork中资源链接到pod上
                 if target.static_framework? and !target.resource_paths.empty?
@@ -228,7 +266,6 @@ module Pod
         # hook run_plugins_post_install_hooks 方法
         install_hooks_method = instance_method(:run_plugins_post_install_hooks)
         define_method(:run_plugins_post_install_hooks) do
-            puts "[HY].run_plugins_post_install_hooks 触发 state:#{Pod::is_prebuild_stage}"
             install_hooks_method.bind(self).()
             if Pod::is_prebuild_stage
                 #开始编译

@@ -310,6 +310,7 @@ module Pod
 
 
         # Override the download step to skip download and prepare file in target folder
+        # linpeng edit: hook集成安装源码的方法（源码下载完之后会将源码关联引用到Pod工程）
         old_method = instance_method(:install_source_of_pod)
         define_method(:install_source_of_pod) do |pod_name|
             if Pod::is_prebuild_stage
@@ -320,6 +321,7 @@ module Pod
                 # \copy from original
 
                 if self.prebuild_pod_names.include? pod_name
+                    #linpeng edit: Pod::is_prebuild_stage 编译完成后 还会执行该步骤 该步骤会将_Prebuild/GenerateFramework/xxxx目录关联引用到Pod/xxxx目录里面 替换framework原本的源码
                     pod_installer.install_for_prebuild!(self.sandbox)
                 else
                     pod_installer.install!

@@ -12,9 +12,7 @@ module Pod
                     tn = "Pods-#{target.name}"
                     dir = Pathname.new(File.join(installer_context.sandbox.root,"Target Support Files", tn))
                     sh_path = File.join(dir, "#{tn}-resources.sh")
-                    puts "[HY].sh_path #{sh_path}"
                     if File.exists?(sh_path)
-                        puts "[HY].resource.sh存在"
                         list.each do |tarname|
                             replace_content_file sh_path, tarname
                         end

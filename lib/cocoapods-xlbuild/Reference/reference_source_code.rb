@@ -13,9 +13,6 @@ module Pod
 
 	    		exsited_framework_pod_names = pre_sandbox.exsited_framework_pod_names || []
 	    		proj_path = sandbox_path + get_project_name("Pods")
-
-					proj_path_new = Pathname.new(sandbox.project_path)
-
 	    		project = Xcodeproj::Project.open(proj_path)
     			exsited_framework_pod_names.each do |target_name|
 	    			real_reference("_Prebuild/#{target_name}", project, target_name)
