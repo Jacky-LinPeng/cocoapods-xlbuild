@@ -52,7 +52,10 @@ set_custom_xcodebuild_options_for_prebuilt_frameworks :simulator => "ARCHS=$(ARC
 ````ruby
 remove_source_code_for_prebuilt_frameworks!
 ````
-
+#### 5. 设置Frameworks缓存仓库 install加速 例如:
+````ruby
+set_local_frameworks_cache_path     '/Users/xxx/Desktop/CacheFrameworks'
+````
 ## 源码调试
 
 不要设置 `remove_source_code_for_prebuilt_frameworks!` 选项，保留源码
