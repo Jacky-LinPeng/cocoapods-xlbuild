@@ -94,6 +94,50 @@ module Pod
             self.custom_build_options_simulator = []
         end
     end
+
+    class Type
+        class_attr_accessor :pod_flag_file
+        @pod_flag_file = "build.xl"
+
+        def self.frameworks_type
+            is_static_binary = Pod::Podfile::DSL.static_binary
+            frameworks_type = is_static_binary ? "static" : "dynamic"
+            return frameworks_type
+        end
+
+        # 动静态库切换时候需要重新build（删除Pod目录重新构建）
+        def self.adjust_dynamic_static_change_pod(pod_root_path)
+            pod_type_path = pod_root_path+Pod::Type.pod_flag_file
+            if not File.exist?(pod_type_path)
+                FileUtils.remove_dir(pod_root_path)
+            else
+                frameworks_type = Pod::Type.frameworks_type
+                aFile = File.new(pod_type_path, "r")
+                if aFile
+                    content = aFile.readlines[0]
+                    if not frameworks_type.equal?(content)
+                        FileUtils.remove_dir(pod_root_path)
+                    end
+                end
+
+            end
+
+        end
+
+        #构建结束 标记当前打包的是动|静态库
+        def self.adjust_dynamic_static_change_pod_finish(pod_root_path)
+            # 标记状态
+            pod_type_path = pod_root_path+Pod::Type.pod_flag_file
+            if File.exist?(pod_type_path)
+                File.delete(pod_type_path)
+            end
+
+            frameworks_type = Pod::Type.frameworks_type
+            File.open(pod_type_path, "w+") { |f|
+                f.write(frameworks_type)
+            }
+        end
+    end
 end
 
 Pod::HooksManager.register('cocoapods-xlbuild', :pre_install) do |installer_context|
@@ -148,6 +192,10 @@ Pod::HooksManager.register('cocoapods-xlbuild', :pre_install) do |installer_cont
     #linpeng edit： 修改Pod目录为 Pod/_Prebuild
     prebuild_sandbox = Pod::PrebuildSandbox.from_standard_sandbox(standard_sandbox)
 
+    # 动|静态库(mach-o type)切换需要重新build（删除Pod目录）
+    pod_root_path = standard_sandbox.root
+    Pod::Type.adjust_dynamic_static_change_pod pod_root_path
+
     # get the podfile for prebuild
     prebuild_podfile = Pod::Podfile.from_ruby(podfile.defined_in_file)
 
@@ -175,6 +223,10 @@ Pod::HooksManager.register('cocoapods-xlbuild', :pre_install) do |installer_cont
     Pod::Config.force_disable_write_lockfile false
     Pod::Installer.disable_install_complete_message false
     Pod::UserInterface.warnings = [] # clean the warning in the prebuild step, it's duplicated.
+
+
+    # install完成标记mach-o type
+    Pod::Type.adjust_dynamic_static_change_pod_finish pod_root_path
 
     # -- step 2: pod install ---
     # install
