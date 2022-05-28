@@ -65,6 +65,8 @@ set_local_frameworks_cache_path     '/Users/xxx/Desktop/CacheFrameworks'
 
 目前是直接将静态库引入至Pods中，注意将Pods添加到gitignore中，否则将会提交至git仓库中
 
+如果工程里面一开始配置的是打包成动态库，后面再改成静态库需要将Pod目录删掉再重新执行pod install，否则就会导致某个pod版本更新了却未重新构建
+
 ## 参考
 
 https://github.com/leavez/cocoapods-binary
