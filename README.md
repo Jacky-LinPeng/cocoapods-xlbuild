@@ -7,14 +7,14 @@
 随着项目的不断迭代，项目代码及依赖三方库和内部库越来越多，导致项目编译时间越来越长，浪费大量开发时间。
 cocoapods-xlbuild插件将三方库打包为静态库，从而提高项目编译时间
 
-## 插入
+## 安装插件
 ````shell
 $ gem install cocoapods-xlbuild
 ````
 
 ## 使用
 修改 podfile 文件，加入以下代码
-#### 1. 使用静态库编译：
+#### 1. 使用静态库编译（推荐）：
 ````ruby
 plugin 'cocoapods-xlbuild'
 use_frameworks! :linkage => :static
