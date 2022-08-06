@@ -106,17 +106,23 @@ module Pod
         end
 
         # 动静态库切换时候需要重新build（删除Pod目录重新构建）
-        def self.adjust_dynamic_static_change_pod(pod_root_path)
+        def self.adjust_dynamic_static_change_pod(standard_sandbox)
+            # 动|静态库(mach-o type)切换需要重新build（删除Pod/_Prebuild目录）
+            _prebuild_sandbox = Pod::PrebuildSandbox.from_standard_sandbox(standard_sandbox)
+            _pod_prebuild_root_path = _prebuild_sandbox.root
+            is_pod_prebuild_root_path_exist = File.exist?(_pod_prebuild_root_path)
+
+            pod_root_path = standard_sandbox.root
             pod_type_path = pod_root_path+Pod::Type.pod_flag_file
-            if not File.exist?(pod_type_path)
-                FileUtils.remove_dir(pod_root_path)
+            if not File.exist?(pod_type_path) and is_pod_prebuild_root_path_exist
+                FileUtils.remove_dir(_pod_prebuild_root_path)
             else
                 frameworks_type = Pod::Type.frameworks_type
                 aFile = File.new(pod_type_path, "r")
                 if aFile
                     content = aFile.readlines[0]
-                    if not frameworks_type.equal?(content)
-                        FileUtils.remove_dir(pod_root_path)
+                    if not frameworks_type.eql?(content) and is_pod_prebuild_root_path_exist
+                        FileUtils.remove_dir(_pod_prebuild_root_path)
                     end
                 end
 
@@ -125,8 +131,9 @@ module Pod
         end
 
         #构建结束 标记当前打包的是动|静态库
-        def self.adjust_dynamic_static_change_pod_finish(pod_root_path)
+        def self.adjust_dynamic_static_change_pod_finish(standard_sandbox)
             # 标记状态
+            pod_root_path = standard_sandbox.root
             pod_type_path = pod_root_path+Pod::Type.pod_flag_file
             if File.exist?(pod_type_path)
                 File.delete(pod_type_path)
@@ -192,9 +199,8 @@ Pod::HooksManager.register('cocoapods-xlbuild', :pre_install) do |installer_cont
     #linpeng edit： 修改Pod目录为 Pod/_Prebuild
     prebuild_sandbox = Pod::PrebuildSandbox.from_standard_sandbox(standard_sandbox)
 
-    # 动|静态库(mach-o type)切换需要重新build（删除Pod目录）
-    pod_root_path = standard_sandbox.root
-    Pod::Type.adjust_dynamic_static_change_pod pod_root_path
+    # 动|静态库(mach-o type)切换需要重新build（删除Pod/_Prebuild目录）
+    Pod::Type.adjust_dynamic_static_change_pod standard_sandbox
 
     # get the podfile for prebuild
     prebuild_podfile = Pod::Podfile.from_ruby(podfile.defined_in_file)
@@ -226,7 +232,7 @@ Pod::HooksManager.register('cocoapods-xlbuild', :pre_install) do |installer_cont
 
 
     # install完成标记mach-o type
-    Pod::Type.adjust_dynamic_static_change_pod_finish pod_root_path
+    Pod::Type.adjust_dynamic_static_change_pod_finish standard_sandbox
 
     # -- step 2: pod install ---
     # install
